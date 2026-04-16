@@ -30,6 +30,18 @@ const DEFAULT_THEME_SETTINGS = {
   lightAccent: '#0f172a',
   darkAccent: '#60a5fa',
 }
+const packageJsonPath = path.join(rootDir, 'package.json')
+const APP_VERSION = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8')).version || '0.1.0'
+const GITHUB_REPO = 'monomo71/buckett'
+const UPDATE_CACHE_TTL_MS = 10 * 60 * 1000
+let updateCheckCache = {
+  checkedAt: 0,
+  data: {
+    updateAvailable: null,
+    latestVersion: null,
+    status: 'unknown',
+  },
+}
 
 const app = express()
 const upload = multer({
@@ -167,6 +179,25 @@ app.post('/api/users', (req, res) => {
   return res.status(201).json({ user: { id: user.id, username: user.username, createdAt: user.createdAt } })
 })
 
+app.patch('/api/users/:id/password', (req, res) => {
+  const password = String(req.body?.password ?? '').trim()
+  if (!password) {
+    return res.status(400).json({ error: 'Nieuw wachtwoord is verplicht' })
+  }
+
+  const db = readDb()
+  const user = db.users.find((item) => item.id === req.params.id)
+
+  if (!user) {
+    return res.status(404).json({ error: 'Gebruiker niet gevonden' })
+  }
+
+  user.password = password
+  logAction(req, db, 'user-password', user.username, 'Wachtwoord bijgewerkt')
+  writeDb(db)
+  return res.json({ success: true })
+})
+
 app.delete('/api/users/:id', (req, res) => {
   const db = readDb()
   const session = getSession(req)
@@ -194,6 +225,24 @@ app.get('/api/activity', (_req, res) => {
   const db = readDb()
   const logs = [...db.logs].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   res.json({ logs })
+})
+
+app.get('/api/system/status', async (_req, res) => {
+  const db = readDb()
+  const totalBytes = db.files.reduce((sum, file) => sum + Number(file.size || 0), 0)
+  const updateInfo = await getUpdateInfo()
+
+  res.json({
+    status: {
+      fileCount: db.files.length,
+      totalBytes,
+      health: 'online',
+      version: APP_VERSION,
+      updateAvailable: updateInfo.updateAvailable,
+      latestVersion: updateInfo.latestVersion,
+      updateStatus: updateInfo.status,
+    },
+  })
 })
 
 app.get('/api/projects', (_req, res) => {
@@ -394,7 +443,7 @@ app.post('/api/upload', upload.array('files'), (req, res) => {
         encodeURIComponent(path.basename(targetPath)),
       )
 
-      const baseUrl = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`
+      const baseUrl = getPublicBaseUrl(req)
 
       const record = {
         id: randomUUID(),
@@ -927,6 +976,83 @@ function getPublicBaseUrl(req) {
   }
 
   return ''
+}
+
+async function getUpdateInfo() {
+  const now = Date.now()
+  if (now - updateCheckCache.checkedAt < UPDATE_CACHE_TTL_MS) {
+    return updateCheckCache.data
+  }
+
+  const fallback = {
+    updateAvailable: null,
+    latestVersion: null,
+    status: 'unknown',
+  }
+
+  try {
+    const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`, {
+      headers: {
+        Accept: 'application/vnd.github+json',
+        'User-Agent': 'Buckett',
+      },
+    })
+
+    if (response.status === 404) {
+      updateCheckCache = {
+        checkedAt: now,
+        data: {
+          updateAvailable: false,
+          latestVersion: null,
+          status: 'none',
+        },
+      }
+      return updateCheckCache.data
+    }
+
+    if (!response.ok) {
+      updateCheckCache = { checkedAt: now, data: fallback }
+      return updateCheckCache.data
+    }
+
+    const payload = await response.json()
+    const latestVersion = String(payload.tag_name ?? payload.name ?? '').trim().replace(/^v/i, '')
+
+    if (!latestVersion) {
+      updateCheckCache = { checkedAt: now, data: fallback }
+      return updateCheckCache.data
+    }
+
+    const updateAvailable = compareVersions(latestVersion, APP_VERSION) > 0
+    updateCheckCache = {
+      checkedAt: now,
+      data: {
+        updateAvailable,
+        latestVersion,
+        status: updateAvailable ? 'available' : 'current',
+      },
+    }
+
+    return updateCheckCache.data
+  } catch {
+    updateCheckCache = { checkedAt: now, data: fallback }
+    return updateCheckCache.data
+  }
+}
+
+function compareVersions(left, right) {
+  const leftParts = String(left).split('.').map((value) => Number.parseInt(value, 10) || 0)
+  const rightParts = String(right).split('.').map((value) => Number.parseInt(value, 10) || 0)
+  const maxLength = Math.max(leftParts.length, rightParts.length)
+
+  for (let index = 0; index < maxLength; index += 1) {
+    const difference = (leftParts[index] || 0) - (rightParts[index] || 0)
+    if (difference !== 0) {
+      return difference
+    }
+  }
+
+  return 0
 }
 
 function updateFileRecordPaths(req, projectSlug, file) {

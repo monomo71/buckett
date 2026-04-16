@@ -10,6 +10,12 @@ This project follows a simple versioning flow based on Semantic Versioning.
 - Dockge deployment support for external servers
 - clearer Docker and Docker Compose installation instructions
 - separate server-friendly stack for GitHub-based deployment
+- user passwords can now be updated from the admin settings screen
+- a live status panel in the left sidebar showing file count, storage usage, system state, version, and update availability
+- a documented product roadmap and wishlist for future Buckett development
+
+### Changed
+- README now clearly states that Buckett currently uses simple authentication and is not intended for sensitive documents
 
 ### Fixed
 - preview and copied file URLs now continue to work after a server migration or domain change

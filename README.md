@@ -2,6 +2,8 @@
 
 Buckett is an open-source, self-hosted file manager for project-based uploads. It gives teams a clean admin interface to upload, organize, preview, rename, export, and manage files inside projects and folders.
 
+> Important security note: Buckett is intentionally lightweight and currently uses a simple username and password system. It is not designed as a hardened security platform for sensitive, confidential, or highly regulated documents.
+
 ## Features
 
 - Project-based file management

@@ -53,6 +53,16 @@ type Asset = {
   relativeUrl?: string
 }
 
+type SystemStatus = {
+  fileCount: number
+  totalBytes: number
+  health: 'online' | 'offline'
+  version: string
+  updateAvailable: boolean | null
+  latestVersion: string | null
+  updateStatus: 'available' | 'current' | 'none' | 'unknown'
+}
+
 type FolderGroup = {
   projectId: string
   folder: string
@@ -98,6 +108,16 @@ type ConfirmState = {
   description: string
   confirmLabel?: string
   onConfirm?: (() => Promise<void>) | null
+}
+
+const defaultSystemStatus: SystemStatus = {
+  fileCount: 0,
+  totalBytes: 0,
+  health: 'online',
+  version: '0.1.0',
+  updateAvailable: null,
+  latestVersion: null,
+  updateStatus: 'unknown',
 }
 
 const translations = {
@@ -150,6 +170,22 @@ const translations = {
     userManagement: 'Gebruikersbeheer',
     addUser: 'Gebruiker toevoegen',
     userPasswordPlaceholder: 'Nieuw wachtwoord',
+    changePasswordAction: 'Wachtwoord wijzigen',
+    changePasswordTitle: 'Wachtwoord aanpassen',
+    passwordUpdated: 'Wachtwoord bijgewerkt',
+    passwordRequired: 'Een nieuw wachtwoord is verplicht',
+    statusCardTitle: 'Status',
+    uploadedFilesLabel: 'Upload bestanden',
+    storageUsedLabel: 'Opslag gebruikt',
+    systemStatusLabel: 'Systeemstatus',
+    versionLabel: 'Versie',
+    updateAvailableLabel: 'Update beschikbaar',
+    statusOnline: 'Online',
+    statusOffline: 'Offline',
+    updateYes: 'Ja',
+    updateNo: 'Nee',
+    updateUnknown: 'Onbekend',
+    updateNoRelease: 'Nog geen release',
     activityLog: 'Activiteitenlog',
     noActivity: 'Nog geen activiteit gelogd.',
     system: 'Systeem',
@@ -267,6 +303,22 @@ const translations = {
     userManagement: 'User management',
     addUser: 'Add user',
     userPasswordPlaceholder: 'New password',
+    changePasswordAction: 'Change password',
+    changePasswordTitle: 'Update password',
+    passwordUpdated: 'Password updated',
+    passwordRequired: 'A new password is required',
+    statusCardTitle: 'Status',
+    uploadedFilesLabel: 'Uploaded files',
+    storageUsedLabel: 'Storage used',
+    systemStatusLabel: 'System status',
+    versionLabel: 'Version',
+    updateAvailableLabel: 'Update available',
+    statusOnline: 'Online',
+    statusOffline: 'Offline',
+    updateYes: 'Yes',
+    updateNo: 'No',
+    updateUnknown: 'Unknown',
+    updateNoRelease: 'No release yet',
     activityLog: 'Activity log',
     noActivity: 'No activity logged yet.',
     system: 'System',
@@ -384,6 +436,22 @@ const translations = {
     userManagement: 'Benutzerverwaltung',
     addUser: 'Benutzer hinzufügen',
     userPasswordPlaceholder: 'Neues Passwort',
+    changePasswordAction: 'Passwort ändern',
+    changePasswordTitle: 'Passwort anpassen',
+    passwordUpdated: 'Passwort aktualisiert',
+    passwordRequired: 'Ein neues Passwort ist erforderlich',
+    statusCardTitle: 'Status',
+    uploadedFilesLabel: 'Hochgeladene Dateien',
+    storageUsedLabel: 'Speicherverbrauch',
+    systemStatusLabel: 'Systemstatus',
+    versionLabel: 'Version',
+    updateAvailableLabel: 'Update verfügbar',
+    statusOnline: 'Online',
+    statusOffline: 'Offline',
+    updateYes: 'Ja',
+    updateNo: 'Nein',
+    updateUnknown: 'Unbekannt',
+    updateNoRelease: 'Noch kein Release',
     activityLog: 'Aktivitätsprotokoll',
     noActivity: 'Noch keine Aktivitäten vorhanden.',
     system: 'System',
@@ -574,6 +642,18 @@ function resolveAssetCopyUrl(asset: Asset) {
   return asset.url
 }
 
+function formatFileSize(bytes: number) {
+  if (bytes >= 1024 ** 3) {
+    return `${(bytes / 1024 ** 3).toFixed(2)} GB`
+  }
+
+  if (bytes >= 1024 ** 2) {
+    return `${(bytes / 1024 ** 2).toFixed(1)} MB`
+  }
+
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`
+}
+
 function getTopLevelFolderName(files: File[]) {
   const relativePath = files.find((file) => file.webkitRelativePath)?.webkitRelativePath ?? ''
   const folder = relativePath.split('/').filter(Boolean)[0] ?? ''
@@ -713,6 +793,7 @@ function App() {
   const [availableLanguages, setAvailableLanguages] = useState<string[]>(['nl', 'en', 'de'])
   const [uploadSettings, setUploadSettings] = useState<UploadSettings>(defaultUploadSettings)
   const [themeSettings, setThemeSettings] = useState<ThemeSettings>(defaultThemeSettings)
+  const [systemInfo, setSystemInfo] = useState<SystemStatus>(defaultSystemStatus)
   const [systemPrefersDark, setSystemPrefersDark] = useState(() => typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)
   const [confirmState, setConfirmState] = useState<ConfirmState>({ open: false, title: '', description: '', confirmLabel: '', onConfirm: null })
   const [folderDialogOpen, setFolderDialogOpen] = useState(false)
@@ -721,6 +802,9 @@ function App() {
   const [folderDialogDescription, setFolderDialogDescription] = useState('')
   const [folderDialogConfirmLabel, setFolderDialogConfirmLabel] = useState('')
   const [folderDialogPlaceholder, setFolderDialogPlaceholder] = useState('')
+  const [folderDialogFieldLabel, setFolderDialogFieldLabel] = useState('')
+  const [folderDialogRequiredMessage, setFolderDialogRequiredMessage] = useState('')
+  const [folderDialogInputType, setFolderDialogInputType] = useState<'text' | 'password'>('text')
 
   const inputRef = useRef<HTMLInputElement | null>(null)
   const folderInputRef = useRef<HTMLInputElement | null>(null)
@@ -804,21 +888,30 @@ function App() {
     description,
     value = '',
     placeholder = t.folderNamePlaceholder,
+    fieldLabel = t.folderNameLabel,
     confirmLabel = t.popupConfirm,
+    requiredMessage = t.folderNameRequired,
+    inputType = 'text',
     onConfirm,
   }: {
     title: string
     description: string
     value?: string
     placeholder?: string
+    fieldLabel?: string
     confirmLabel?: string
+    requiredMessage?: string
+    inputType?: 'text' | 'password'
     onConfirm: (value: string) => Promise<void>
   }) {
     setFolderDialogTitle(title)
     setFolderDialogDescription(description)
     setFolderDialogValue(value)
     setFolderDialogPlaceholder(placeholder)
+    setFolderDialogFieldLabel(fieldLabel)
     setFolderDialogConfirmLabel(confirmLabel)
+    setFolderDialogRequiredMessage(requiredMessage)
+    setFolderDialogInputType(inputType)
     pendingUploadRef.current = null
     pendingDialogActionRef.current = onConfirm
     setFolderDialogOpen(true)
@@ -857,6 +950,7 @@ function App() {
       fetch('/api/users'),
       fetch('/api/settings'),
       fetch('/api/activity'),
+      fetch('/api/system/status'),
     ])
 
     if (responses.some((response) => response.status === 401)) {
@@ -868,7 +962,7 @@ function App() {
       throw new Error('Kon gegevens niet laden')
     }
 
-    const [projectData, fileData, userData, settingsData, activityData] = await Promise.all(
+    const [projectData, fileData, userData, settingsData, activityData, systemData] = await Promise.all(
       responses.map((response) => response.json()),
     )
 
@@ -876,6 +970,7 @@ function App() {
     setAssets(fileData.files ?? [])
     setUsers(userData.users ?? [])
     setActivity(activityData.logs ?? [])
+    setSystemInfo(systemData.status ?? defaultSystemStatus)
     setAppLanguage(settingsData.settings?.language ?? 'nl')
     setAvailableLanguages(settingsData.settings?.availableLanguages ?? ['nl', 'en', 'de'])
     setUploadSettings(normalizeUploadSettings(settingsData.settings?.upload))
@@ -1025,6 +1120,14 @@ function App() {
       : Math.min(safeCurrentPage * itemsPerPage, visibleFiles.length)
 
   const selectedProjectName = sortedProjects.find((project) => project.id === selectedProject)?.name ?? '-'
+  const systemHealthLabel = systemInfo.health === 'online' ? t.statusOnline : t.statusOffline
+  const updateStatusLabel = systemInfo.updateStatus === 'available'
+    ? `${t.updateYes}${systemInfo.latestVersion ? ` • ${systemInfo.latestVersion}` : ''}`
+    : systemInfo.updateStatus === 'current'
+      ? t.updateNo
+      : systemInfo.updateStatus === 'none'
+        ? t.updateNoRelease
+        : t.updateUnknown
 
   async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -1056,6 +1159,7 @@ function App() {
     setAssets([])
     setUsers([])
     setActivity([])
+    setSystemInfo(defaultSystemStatus)
     setSelectedFoldersByProject({})
     pendingFolderRef.current = null
     toast.success('Uitgelogd')
@@ -1123,6 +1227,35 @@ function App() {
         }
 
         toast.success('Gebruiker verwijderd')
+        await loadData()
+      },
+    })
+  }
+
+  async function changeUserPassword(userId: string, name: string) {
+    openTextInputDialog({
+      title: t.changePasswordTitle,
+      description: `${t.changePasswordAction}: ${name}`,
+      value: '',
+      placeholder: t.userPasswordPlaceholder,
+      fieldLabel: t.userPasswordPlaceholder,
+      confirmLabel: t.popupConfirm,
+      requiredMessage: t.passwordRequired,
+      inputType: 'password',
+      onConfirm: async (value) => {
+        const response = await fetch(`/api/users/${userId}/password`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: value }),
+        })
+
+        const data = await response.json().catch(() => ({ error: 'Wachtwoord kon niet worden aangepast' }))
+        if (!response.ok) {
+          toast.error(data.error ?? 'Wachtwoord kon niet worden aangepast')
+          return
+        }
+
+        toast.success(t.passwordUpdated)
         await loadData()
       },
     })
@@ -1475,13 +1608,16 @@ function App() {
 
   async function submitFolderDialog() {
     if (!folderDialogValue.trim()) {
-      toast.error(t.folderNameRequired)
+      toast.error(folderDialogRequiredMessage || t.folderNameRequired)
       return
     }
 
     const pendingUpload = pendingUploadRef.current
     const pendingAction = pendingDialogActionRef.current
     setFolderDialogOpen(false)
+    setFolderDialogFieldLabel('')
+    setFolderDialogRequiredMessage('')
+    setFolderDialogInputType('text')
 
     pendingUploadRef.current = null
     pendingDialogActionRef.current = null
@@ -1611,9 +1747,10 @@ function App() {
         </header>
 
         <div className="grid min-h-[calc(100vh-64px)] w-full grid-cols-1 lg:grid-cols-[260px_260px_minmax(0,1fr)]">
-          <aside className="px-4 py-5 lg:border-r" style={{ background: 'var(--panel-bg)', borderColor: 'var(--border-color)' }}>
-            <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">{t.projects}</div>
-            <div className="space-y-1.5">
+          <aside className="flex h-full flex-col px-4 py-5 lg:border-r" style={{ background: 'var(--panel-bg)', borderColor: 'var(--border-color)' }}>
+            <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+              <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">{t.projects}</div>
+              <div className="space-y-1.5">
               {sortedProjects.length === 0 && (
                 <div className="rounded-2xl bg-slate-100/60 px-3 py-4 text-xs text-slate-500">{t.noProjects}</div>
               )}
@@ -1664,6 +1801,39 @@ function App() {
                   </div>
                 )
               })}
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-[22px] border p-3" style={{ borderColor: 'var(--border-color)', background: 'var(--panel-muted)', color: 'var(--text-soft)' }}>
+              <div className="mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: 'var(--text-muted)' }}>
+                <Activity className="h-3.5 w-3.5" />
+                <span>{t.statusCardTitle}</span>
+              </div>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between gap-3">
+                  <span>{t.uploadedFilesLabel}</span>
+                  <span className="font-semibold text-slate-800">{systemInfo.fileCount}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span>{t.storageUsedLabel}</span>
+                  <span className="font-semibold text-slate-800">{formatFileSize(systemInfo.totalBytes)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span>{t.systemStatusLabel}</span>
+                  <span className="flex items-center gap-2 font-semibold text-slate-800">
+                    <span className={`inline-block h-2 w-2 rounded-full ${systemInfo.health === 'online' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                    {systemHealthLabel}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span>{t.versionLabel}</span>
+                  <span className="font-semibold text-slate-800">v{systemInfo.version}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span>{t.updateAvailableLabel}</span>
+                  <span className="text-right font-semibold text-slate-800">{updateStatusLabel}</span>
+                </div>
+              </div>
             </div>
           </aside>
 
@@ -1965,13 +2135,21 @@ function App() {
                             <div className="font-medium">{user.username}</div>
                             <div className="text-[11px] text-slate-400">{new Date(user.createdAt).toLocaleString(locale)}</div>
                           </div>
-                          <IconActionButton
-                            label={t.deleteUserAction}
-                            onClick={() => void deleteUser(user.id, user.username)}
-                            disabled={user.username === currentUserName}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </IconActionButton>
+                          <div className="flex items-center gap-1">
+                            <IconActionButton
+                              label={t.changePasswordAction}
+                              onClick={() => void changeUserPassword(user.id, user.username)}
+                            >
+                              <LockKeyhole className="h-3.5 w-3.5" />
+                            </IconActionButton>
+                            <IconActionButton
+                              label={t.deleteUserAction}
+                              onClick={() => void deleteUser(user.id, user.username)}
+                              disabled={user.username === currentUserName}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </IconActionButton>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -2219,13 +2397,16 @@ function App() {
             </DialogHeader>
             <div className="space-y-3">
               <div>
-                <label className="mb-2 block text-sm text-slate-600">{t.folderNameLabel}</label>
-                <Input value={folderDialogValue} placeholder={folderDialogPlaceholder || t.folderNamePlaceholder} onChange={(event) => setFolderDialogValue(event.target.value)} />
+                <label className="mb-2 block text-sm text-slate-600">{folderDialogFieldLabel || t.folderNameLabel}</label>
+                <Input type={folderDialogInputType} value={folderDialogValue} placeholder={folderDialogPlaceholder || t.folderNamePlaceholder} onChange={(event) => setFolderDialogValue(event.target.value)} />
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => {
                   pendingUploadRef.current = null
                   pendingDialogActionRef.current = null
+                  setFolderDialogFieldLabel('')
+                  setFolderDialogRequiredMessage('')
+                  setFolderDialogInputType('text')
                   setFolderDialogOpen(false)
                 }}>
                   {t.popupCancel}
