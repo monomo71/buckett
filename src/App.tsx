@@ -179,7 +179,7 @@ const translations = {
     storageUsedLabel: 'Opslag gebruikt',
     systemStatusLabel: 'Systeemstatus',
     versionLabel: 'Versie',
-    updateAvailableLabel: 'Update beschikbaar',
+    updateAvailableLabel: 'Nieuwe release',
     statusOnline: 'Online',
     statusOffline: 'Offline',
     updateYes: 'Ja',
@@ -312,7 +312,7 @@ const translations = {
     storageUsedLabel: 'Storage used',
     systemStatusLabel: 'System status',
     versionLabel: 'Version',
-    updateAvailableLabel: 'Update available',
+    updateAvailableLabel: 'New release',
     statusOnline: 'Online',
     statusOffline: 'Offline',
     updateYes: 'Yes',
@@ -445,7 +445,7 @@ const translations = {
     storageUsedLabel: 'Speicherverbrauch',
     systemStatusLabel: 'Systemstatus',
     versionLabel: 'Version',
-    updateAvailableLabel: 'Update verfügbar',
+    updateAvailableLabel: 'Neues Release',
     statusOnline: 'Online',
     statusOffline: 'Offline',
     updateYes: 'Ja',
@@ -1702,13 +1702,13 @@ function App() {
                 <FolderOpen className="h-5 w-5" />
               </div>
               <div>
-                <div className="text-sm font-semibold text-slate-900">{t.appName}</div>
-                <div className="text-xs text-slate-500">{t.adminArea}</div>
+                <div className="text-sm font-semibold" style={{ color: 'var(--text-main)' }}>{t.appName}</div>
+                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{t.adminArea}</div>
               </div>
             </button>
 
             <div className="flex items-center gap-2">
-              <div className="hidden text-xs text-slate-500 md:block">{t.signedInAs}: <span className="font-medium text-slate-700">{currentUserName || username}</span></div>
+              <div className="hidden text-xs md:block" style={{ color: 'var(--text-muted)' }}>{t.signedInAs}: <span className="font-medium" style={{ color: 'var(--text-main)' }}>{currentUserName || username}</span></div>
 
               <div className={`overflow-hidden transition-all duration-300 ease-out ${searchOpen ? 'max-w-[280px] opacity-100' : 'max-w-0 opacity-0'}`}>
                 <div className="flex items-center gap-2 rounded-xl bg-white px-2 py-1.5">
@@ -1778,7 +1778,10 @@ function App() {
                     </button>
 
                     <div className="relative shrink-0">
-                      <div className={`absolute right-9 top-1/2 z-20 flex -translate-y-1/2 items-center gap-1 rounded-xl border border-slate-200/80 bg-slate-100/95 px-1.5 py-1 shadow-sm transition-all duration-200 ${actionsOpen ? 'pointer-events-auto translate-x-0 opacity-100' : 'pointer-events-none translate-x-3 opacity-0'}`}>
+                      <div
+                        className={`absolute right-9 top-1/2 z-20 flex -translate-y-1/2 items-center gap-1 rounded-xl px-1.5 py-1 shadow-sm transition-all duration-200 ${actionsOpen ? 'pointer-events-auto translate-x-0 opacity-100' : 'pointer-events-none translate-x-3 opacity-0'}`}
+                        style={{ border: '1px solid var(--border-color)', background: 'var(--panel-bg)', color: 'var(--text-main)' }}
+                      >
                         <IconActionButton label={t.renameProjectAction} onClick={() => { setOpenProjectActionsId(null); void renameProject(project.id, project.name) }}>
                           <Pencil className="h-3.5 w-3.5" />
                         </IconActionButton>
@@ -1812,26 +1815,26 @@ function App() {
               <div className="space-y-2 text-xs">
                 <div className="flex items-center justify-between gap-3">
                   <span>{t.uploadedFilesLabel}</span>
-                  <span className="font-semibold text-slate-800">{systemInfo.fileCount}</span>
+                  <span className="font-semibold" style={{ color: 'var(--text-main)' }}>{systemInfo.fileCount}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span>{t.storageUsedLabel}</span>
-                  <span className="font-semibold text-slate-800">{formatFileSize(systemInfo.totalBytes)}</span>
+                  <span className="font-semibold" style={{ color: 'var(--text-main)' }}>{formatFileSize(systemInfo.totalBytes)}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span>{t.systemStatusLabel}</span>
-                  <span className="flex items-center gap-2 font-semibold text-slate-800">
+                  <span className="flex items-center gap-2 font-semibold" style={{ color: 'var(--text-main)' }}>
                     <span className={`inline-block h-2 w-2 rounded-full ${systemInfo.health === 'online' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                     {systemHealthLabel}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span>{t.versionLabel}</span>
-                  <span className="font-semibold text-slate-800">v{systemInfo.version}</span>
+                  <span className="font-semibold" style={{ color: 'var(--text-main)' }}>v{systemInfo.version}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span>{t.updateAvailableLabel}</span>
-                  <span className="text-right font-semibold text-slate-800">{updateStatusLabel}</span>
+                  <span className="text-right font-semibold" style={{ color: 'var(--text-main)' }}>{updateStatusLabel}</span>
                 </div>
               </div>
             </div>
@@ -1867,7 +1870,10 @@ function App() {
                         </button>
 
                         <div className="relative shrink-0">
-                          <div className={`absolute right-9 top-1/2 z-20 flex -translate-y-1/2 items-center gap-1 rounded-xl border border-slate-200/80 bg-slate-100/95 px-1.5 py-1 shadow-sm transition-all duration-200 ${actionsOpen ? 'pointer-events-auto translate-x-0 opacity-100' : 'pointer-events-none translate-x-3 opacity-0'}`}>
+                          <div
+                            className={`absolute right-9 top-1/2 z-20 flex -translate-y-1/2 items-center gap-1 rounded-xl px-1.5 py-1 shadow-sm transition-all duration-200 ${actionsOpen ? 'pointer-events-auto translate-x-0 opacity-100' : 'pointer-events-none translate-x-3 opacity-0'}`}
+                            style={{ border: '1px solid var(--border-color)', background: 'var(--panel-bg)', color: 'var(--text-main)' }}
+                          >
                             <IconActionButton label={t.renameFolderAction} onClick={() => { setOpenFolderActionsKey(null); void renameFolder(folder.projectId, folder.folder) }}>
                               <Pencil className="h-3.5 w-3.5" />
                             </IconActionButton>
@@ -1898,10 +1904,10 @@ function App() {
             ) : (
               <>
                 <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">{t.system}</div>
-                <div className="space-y-2 text-xs text-slate-600">
-                  <div className="rounded-2xl bg-white/80 p-3"><Languages className="mb-2 h-4 w-4 text-slate-500" />{t.language}</div>
-                  <div className="rounded-2xl bg-white/80 p-3"><Users className="mb-2 h-4 w-4 text-slate-500" />{t.userManagement}</div>
-                  <div className="rounded-2xl bg-white/80 p-3"><Activity className="mb-2 h-4 w-4 text-slate-500" />{t.activityLog}</div>
+                <div className="space-y-2 text-xs" style={{ color: 'var(--text-soft)' }}>
+                  <div className="rounded-2xl p-3" style={{ background: 'var(--panel-bg)' }}><Languages className="mb-2 h-4 w-4" style={{ color: 'var(--text-muted)' }} />{t.language}</div>
+                  <div className="rounded-2xl p-3" style={{ background: 'var(--panel-bg)' }}><Users className="mb-2 h-4 w-4" style={{ color: 'var(--text-muted)' }} />{t.userManagement}</div>
+                  <div className="rounded-2xl p-3" style={{ background: 'var(--panel-bg)' }}><Activity className="mb-2 h-4 w-4" style={{ color: 'var(--text-muted)' }} />{t.activityLog}</div>
                 </div>
               </>
             )}
