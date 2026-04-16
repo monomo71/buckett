@@ -6,6 +6,15 @@ This project follows a simple versioning flow based on Semantic Versioning.
 
 ## Unreleased
 
+## 0.1.6 - 2026-04-16
+
+### Changed
+- Dockge deployments now use a pinned release tag by default for more predictable updates
+- Docker setups now include a health check so restart state is easier to trust and diagnose
+
+### Fixed
+- reduced the chance that Dockge keeps serving an older cached image after a normal update or redeploy
+
 ## 0.1.5 - 2026-04-16
 
 ### Added
