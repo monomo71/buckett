@@ -110,6 +110,13 @@ Available settings:
 
 See [.env.example](.env.example) for the defaults.
 
+## Versioning and releases
+
+Project history and future release notes are tracked here:
+
+- [CHANGELOG.md](CHANGELOG.md)
+- [VERSIONING.md](VERSIONING.md)
+
 ## Public repository notes
 
 This repository is prepared for GitHub and excludes personal uploaded files, backups, runtime data, build output, and local environment files.
