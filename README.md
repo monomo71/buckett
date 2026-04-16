@@ -84,8 +84,16 @@ Recommended steps:
 1. Create a new stack in Dockge
 2. Paste the contents of [docker-compose.dockge.yml](docker-compose.dockge.yml)
 3. Set your own values for PUBLIC_BASE_URL, ADMIN_USERNAME, and ADMIN_PASSWORD
-4. Deploy the stack
-5. For future updates, use Update or Redeploy so the latest image is pulled again
+4. Optionally set BUCKETT_TAG to a fixed release such as v0.1.5 for fully predictable updates
+5. Deploy the stack
+
+Most reliable update flow in Dockge:
+
+1. Wait until the GitHub Actions image build has finished after push or release
+2. In Dockge, change BUCKETT_TAG from the old version to the new version, for example from v0.1.0 to v0.1.5
+3. Save and Redeploy the stack
+
+Using a fixed version tag is more reliable than only using latest, because some Docker and Dockge setups can keep using a cached latest image until the container is recreated.
 
 If the package is not yet visible on your server, wait until the GitHub Actions build has completed after push.
 

@@ -1,6 +1,6 @@
 services:
   buckett:
-    image: ghcr.io/monomo71/buckett:latest
+    image: ghcr.io/monomo71/buckett:${BUCKETT_TAG:-latest}
     pull_policy: always
     container_name: buckett
     restart: unless-stopped
@@ -10,6 +10,7 @@ services:
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://jouwdomein.nl}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      BUCKETT_TAG: ${BUCKETT_TAG:-latest}
     volumes:
       - ./uploads:/app/uploads
       - ./data:/app/data
