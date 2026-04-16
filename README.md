@@ -2,6 +2,17 @@
 
 Buckett is an open-source, self-hosted file manager for project-based uploads. It gives teams a clean admin interface to upload, organize, preview, rename, export, and manage files inside projects and folders.
 
+## Screenshots
+
+<p align="center">
+  <a href="images/LoginScreen.png"><img src="images/LoginScreen.png" alt="Buckett login screen" width="24%" /></a>
+  <a href="images/Setup-page.png"><img src="images/Setup-page.png" alt="Buckett settings page" width="24%" /></a>
+  <a href="images/lightmode.png"><img src="images/lightmode.png" alt="Buckett light mode" width="24%" /></a>
+  <a href="images/Darkmode.png"><img src="images/Darkmode.png" alt="Buckett dark mode" width="24%" /></a>
+</p>
+
+<p align="center"><em>Click any screenshot to view the full-size image.</em></p>
+
 > Important security note: Buckett is intentionally lightweight and currently uses a simple username and password system. It is not designed as a hardened security platform for sensitive, confidential, or highly regulated documents.
 
 ## Features
