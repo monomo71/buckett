@@ -1,14 +1,14 @@
 services:
   buckett:
     build:
-      context: .
+      context: https://github.com/monomo71/buckett.git#main
       dockerfile: Dockerfile
     container_name: buckett
     restart: unless-stopped
     ports:
       - "3001:3001"
     environment:
-      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:3001}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://jouwdomein.nl}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
     volumes:
