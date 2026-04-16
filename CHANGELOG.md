@@ -6,6 +6,13 @@ This project follows a simple versioning flow based on Semantic Versioning.
 
 ## Unreleased
 
+## 1.0.0 - 2026-04-16
+
+### Highlights
+- first stable public release of Buckett
+- project-based file management with multi-user admin controls
+- dark mode, theme customization, activity archives, and Docker/Dockge deployment support
+
 ## 0.1.7 - 2026-04-16
 
 ### Added

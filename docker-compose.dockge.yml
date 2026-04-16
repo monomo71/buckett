@@ -1,6 +1,6 @@
 services:
   buckett:
-    image: ghcr.io/monomo71/buckett:${BUCKETT_TAG:-v0.1.7}
+    image: ghcr.io/monomo71/buckett:${BUCKETT_TAG:-v1.0.0}
     pull_policy: always
     container_name: buckett
     restart: unless-stopped
