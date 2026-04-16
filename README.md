@@ -49,18 +49,30 @@ Buckett includes a Docker setup for simple self-hosting.
 
 ### Start with Docker Compose
 
-1. Copy the example environment file
-2. Build and start the container
-3. Open Buckett in your browser
+1. Start Docker Desktop
+2. Open a terminal in the project root
+3. Copy the example environment file
+4. Build and start the container
+5. Open Buckett in your browser
 
 Commands:
 
 - cp .env.example .env
-- docker-compose up -d --build
+- docker compose up -d --remove-orphans
+
+If your system uses the older Compose command, this also works:
+
+- docker-compose up -d --remove-orphans
 
 Then open:
 
 - http://localhost:3001
+
+### Troubleshooting
+
+If you see an error about not being able to connect to the Docker daemon, Docker Desktop is not running yet.
+
+If you see a Dockerfile not found error, make sure you run the command from the project root folder.
 
 ### Persistent storage
 

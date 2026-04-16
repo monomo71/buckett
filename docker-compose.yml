@@ -1,6 +1,9 @@
 services:
   buckett:
-    build: .
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: buckett:latest
     container_name: buckett
     restart: unless-stopped
     ports:
