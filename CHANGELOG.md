@@ -6,6 +6,13 @@ This project follows a simple versioning flow based on Semantic Versioning.
 
 ## Unreleased
 
+## 0.1.7 - 2026-04-16
+
+### Added
+- compact activity log with a fixed-height scroll area
+- daily archive selector so you can switch between log days
+- export of the currently selected activity view to CSV
+
 ## 0.1.6 - 2026-04-16
 
 ### Changed

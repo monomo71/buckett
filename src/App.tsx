@@ -188,6 +188,11 @@ const translations = {
     updateNoRelease: 'Nog geen release',
     activityLog: 'Activiteitenlog',
     noActivity: 'Nog geen activiteit gelogd.',
+    activityArchiveLabel: 'Archiefdag',
+    activityArchiveAll: 'Alle dagen',
+    activityArchiveToday: 'Vandaag',
+    downloadVisibleActivity: 'Download selectie',
+    activityItemsShown: 'items zichtbaar',
     system: 'Systeem',
     library: 'Bibliotheek',
     themeSettings: 'Weergave en thema',
@@ -321,6 +326,11 @@ const translations = {
     updateNoRelease: 'No release yet',
     activityLog: 'Activity log',
     noActivity: 'No activity logged yet.',
+    activityArchiveLabel: 'Archive day',
+    activityArchiveAll: 'All days',
+    activityArchiveToday: 'Today',
+    downloadVisibleActivity: 'Download selection',
+    activityItemsShown: 'items visible',
     system: 'System',
     library: 'Library',
     themeSettings: 'Appearance and theme',
@@ -454,6 +464,11 @@ const translations = {
     updateNoRelease: 'Noch kein Release',
     activityLog: 'Aktivitätsprotokoll',
     noActivity: 'Noch keine Aktivitäten vorhanden.',
+    activityArchiveLabel: 'Archivtag',
+    activityArchiveAll: 'Alle Tage',
+    activityArchiveToday: 'Heute',
+    downloadVisibleActivity: 'Auswahl herunterladen',
+    activityItemsShown: 'Einträge sichtbar',
     system: 'System',
     library: 'Bibliothek',
     themeSettings: 'Ansicht und Thema',
@@ -654,6 +669,23 @@ function formatFileSize(bytes: number) {
   return `${Math.max(1, Math.round(bytes / 1024))} KB`
 }
 
+function getActivityDateKey(value: string | Date) {
+  const date = value instanceof Date ? value : new Date(value)
+  const year = String(date.getFullYear())
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function formatActivityDateLabel(dateKey: string, locale: string) {
+  return new Date(`${dateKey}T12:00:00`).toLocaleDateString(locale, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
 function getTopLevelFolderName(files: File[]) {
   const relativePath = files.find((file) => file.webkitRelativePath)?.webkitRelativePath ?? ''
   const folder = relativePath.split('/').filter(Boolean)[0] ?? ''
@@ -789,6 +821,7 @@ function App() {
   const [openFolderActionsKey, setOpenFolderActionsKey] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState<number | 'all'>(25)
+  const [selectedActivityDate, setSelectedActivityDate] = useState('')
   const [appLanguage, setAppLanguage] = useState('nl')
   const [availableLanguages, setAvailableLanguages] = useState<string[]>(['nl', 'en', 'de'])
   const [uploadSettings, setUploadSettings] = useState<UploadSettings>(defaultUploadSettings)
@@ -851,6 +884,66 @@ function App() {
 
     return uploadSettings.allowedFileTypes.map((type) => labels[type]).join(', ')
   }, [t, uploadSettings.allowedFileTypes])
+  const activityTodayKey = getActivityDateKey(new Date())
+  const activityDateOptions = useMemo(() => {
+    return [...new Set(activity.map((item) => getActivityDateKey(item.createdAt)))].sort((left, right) => right.localeCompare(left))
+  }, [activity])
+  const filteredActivity = useMemo(() => {
+    if (!selectedActivityDate || selectedActivityDate === 'all') {
+      return activity
+    }
+
+    return activity.filter((item) => getActivityDateKey(item.createdAt) === selectedActivityDate)
+  }, [activity, selectedActivityDate])
+
+  useEffect(() => {
+    if (activityDateOptions.length === 0) {
+      setSelectedActivityDate('all')
+      return
+    }
+
+    setSelectedActivityDate((current) => {
+      if (current === 'all' || activityDateOptions.includes(current)) {
+        return current || (activityDateOptions.includes(activityTodayKey) ? activityTodayKey : activityDateOptions[0])
+      }
+
+      return activityDateOptions.includes(activityTodayKey) ? activityTodayKey : activityDateOptions[0]
+    })
+  }, [activityDateOptions, activityTodayKey])
+
+  function downloadVisibleActivity() {
+    if (filteredActivity.length === 0) {
+      toast.error(t.noActivity)
+      return
+    }
+
+    const rows = [
+      ['Date', 'User', 'Target', 'Action', 'Details'],
+      ...filteredActivity.map((item) => [
+        new Date(item.createdAt).toLocaleString(locale),
+        item.user,
+        item.target,
+        item.action,
+        item.details || '',
+      ]),
+    ]
+
+    const csv = rows
+      .map((row) => row.map((value) => `"${String(value).replaceAll('"', '""')}"`).join(','))
+      .join('\n')
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    const datePart = selectedActivityDate === 'all' || !selectedActivityDate ? 'all-days' : selectedActivityDate
+
+    link.href = url
+    link.download = `buckett-activity-${datePart}.csv`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  }
 
   function setSelectedFolderForProject(folder: string, projectId = selectedProject) {
     if (!projectId) {
@@ -2161,14 +2254,40 @@ function App() {
                     </div>
                   </section>
 
-                  <section className="rounded-[24px] bg-white/80 p-5 xl:col-span-2">
-                    <div className="mb-3 flex items-center gap-2 text-slate-700">
-                      <Activity className="h-4 w-4" />
-                      <div className="text-sm font-semibold">{t.activityLog}</div>
+                  <section className="rounded-[24px] bg-white/80 p-5 xl:col-span-2" style={{ background: 'var(--panel-bg)', color: 'var(--text-main)' }}>
+                    <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="flex items-center gap-2 text-slate-700">
+                        <Activity className="h-4 w-4" />
+                        <div className="text-sm font-semibold">{t.activityLog}</div>
+                      </div>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <label className="text-xs text-slate-500">
+                          <span className="mb-1 block">{t.activityArchiveLabel}</span>
+                          <select
+                            className="min-w-[210px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none"
+                            value={selectedActivityDate}
+                            onChange={(event) => setSelectedActivityDate(event.target.value)}
+                          >
+                            <option value="all">{t.activityArchiveAll}</option>
+                            {activityDateOptions.map((dateKey) => (
+                              <option key={dateKey} value={dateKey}>
+                                {dateKey === activityTodayKey ? t.activityArchiveToday : formatActivityDateLabel(dateKey, locale)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <Button variant="secondary" onClick={() => downloadVisibleActivity()} disabled={filteredActivity.length === 0}>
+                          <Download className="mr-2 h-4 w-4" />
+                          {t.downloadVisibleActivity}
+                        </Button>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      {activity.length === 0 && <div className="text-xs text-slate-500">{t.noActivity}</div>}
-                      {activity.slice(0, 20).map((item) => (
+                    <div className="mb-3 text-xs text-slate-500">
+                      {filteredActivity.length} {t.activityItemsShown}
+                    </div>
+                    <div className="max-h-[360px] space-y-2 overflow-y-auto pr-1">
+                      {filteredActivity.length === 0 && <div className="text-xs text-slate-500">{t.noActivity}</div>}
+                      {filteredActivity.map((item) => (
                         <div key={item.id} className="flex flex-col gap-1 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700 md:flex-row md:items-center md:justify-between">
                           <div>
                             <div className="font-medium">{item.user} • {item.target}</div>
