@@ -59,9 +59,12 @@ td {
   background: var(--accent) !important;
 }
 
+.bg-slate-200,
+.bg-slate-200\/70,
 .bg-slate-100,
 .bg-slate-100\/60,
 .bg-slate-100\/80,
+.bg-slate-100\/90,
 .bg-slate-50,
 .bg-slate-50\/80,
 .bg-white,
@@ -71,7 +74,14 @@ td {
   background: var(--panel-muted) !important;
 }
 
-.text-slate-900 {
+.hover\:bg-slate-100:hover,
+.hover\:bg-slate-200:hover,
+.hover\:bg-slate-50:hover {
+  background: var(--panel-soft) !important;
+}
+
+.text-slate-900,
+.text-slate-800 {
   color: var(--text-main) !important;
 }
 
@@ -85,14 +95,21 @@ td {
 }
 
 .text-slate-500,
-.text-slate-400 {
+.text-slate-400,
+.text-slate-300 {
   color: var(--text-muted) !important;
+}
+
+.hover\:text-slate-700:hover,
+.hover\:text-slate-900:hover {
+  color: var(--text-main) !important;
 }
 
 .border-slate-200,
 .border-slate-200\/60,
 .border-slate-200\/70,
-.border-slate-100\/80 {
+.border-slate-100\/80,
+.border-slate-900 {
   border-color: var(--border-color) !important;
 }
 
