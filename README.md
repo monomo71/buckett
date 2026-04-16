@@ -75,9 +75,9 @@ Then open:
 
 ### Option 2: Dockge on an external server
 
-Use this when you want to deploy through Dockge and do not have the full repository checked out on the server.
+Use this when you want to deploy through Dockge on a remote server.
 
-In that case, use [docker-compose.dockge.yml](docker-compose.dockge.yml). This version builds directly from GitHub.
+Use [docker-compose.dockge.yml](docker-compose.dockge.yml). This version pulls the latest published Buckett image from GitHub Container Registry, which makes updates much more reliable in Dockge.
 
 Recommended steps:
 
@@ -85,6 +85,9 @@ Recommended steps:
 2. Paste the contents of [docker-compose.dockge.yml](docker-compose.dockge.yml)
 3. Set your own values for PUBLIC_BASE_URL, ADMIN_USERNAME, and ADMIN_PASSWORD
 4. Deploy the stack
+5. For future updates, use Update or Redeploy so the latest image is pulled again
+
+If the package is not yet visible on your server, wait until the GitHub Actions build has completed after push.
 
 ### Troubleshooting
 

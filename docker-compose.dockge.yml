@@ -1,8 +1,7 @@
 services:
   buckett:
-    build:
-      context: https://github.com/monomo71/buckett.git#main
-      dockerfile: Dockerfile
+    image: ghcr.io/monomo71/buckett:latest
+    pull_policy: always
     container_name: buckett
     restart: unless-stopped
     ports:
