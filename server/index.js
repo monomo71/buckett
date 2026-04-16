@@ -978,6 +978,23 @@ function getPublicBaseUrl(req) {
   return ''
 }
 
+async function getLatestTagVersion() {
+  const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/tags`, {
+    headers: {
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'Buckett',
+    },
+  })
+
+  if (!response.ok) {
+    return null
+  }
+
+  const payload = await response.json()
+  const firstTag = Array.isArray(payload) ? payload[0] : null
+  return String(firstTag?.name ?? '').trim().replace(/^v/i, '') || null
+}
+
 async function getUpdateInfo() {
   const now = Date.now()
   if (now - updateCheckCache.checkedAt < UPDATE_CACHE_TTL_MS) {
@@ -998,25 +1015,28 @@ async function getUpdateInfo() {
       },
     })
 
-    if (response.status === 404) {
-      updateCheckCache = {
-        checkedAt: now,
-        data: {
-          updateAvailable: false,
-          latestVersion: null,
-          status: 'none',
-        },
-      }
-      return updateCheckCache.data
-    }
+    let latestVersion = null
 
-    if (!response.ok) {
+    if (response.status === 404) {
+      latestVersion = await getLatestTagVersion()
+      if (!latestVersion) {
+        updateCheckCache = {
+          checkedAt: now,
+          data: {
+            updateAvailable: false,
+            latestVersion: null,
+            status: 'none',
+          },
+        }
+        return updateCheckCache.data
+      }
+    } else if (!response.ok) {
       updateCheckCache = { checkedAt: now, data: fallback }
       return updateCheckCache.data
+    } else {
+      const payload = await response.json()
+      latestVersion = String(payload.tag_name ?? payload.name ?? '').trim().replace(/^v/i, '')
     }
-
-    const payload = await response.json()
-    const latestVersion = String(payload.tag_name ?? payload.name ?? '').trim().replace(/^v/i, '')
 
     if (!latestVersion) {
       updateCheckCache = { checkedAt: now, data: fallback }

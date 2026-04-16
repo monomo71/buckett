@@ -179,7 +179,7 @@ const translations = {
     storageUsedLabel: 'Opslag gebruikt',
     systemStatusLabel: 'Systeemstatus',
     versionLabel: 'Versie',
-    updateAvailableLabel: 'Nieuwe release',
+    updateAvailableLabel: 'Laatste release',
     statusOnline: 'Online',
     statusOffline: 'Offline',
     updateYes: 'Ja',
@@ -317,7 +317,7 @@ const translations = {
     storageUsedLabel: 'Storage used',
     systemStatusLabel: 'System status',
     versionLabel: 'Version',
-    updateAvailableLabel: 'New release',
+    updateAvailableLabel: 'Latest release',
     statusOnline: 'Online',
     statusOffline: 'Offline',
     updateYes: 'Yes',
@@ -455,7 +455,7 @@ const translations = {
     storageUsedLabel: 'Speicherverbrauch',
     systemStatusLabel: 'Systemstatus',
     versionLabel: 'Version',
-    updateAvailableLabel: 'Neues Release',
+    updateAvailableLabel: 'Letztes Release',
     statusOnline: 'Online',
     statusOffline: 'Offline',
     updateYes: 'Ja',
@@ -1215,9 +1215,9 @@ function App() {
   const selectedProjectName = sortedProjects.find((project) => project.id === selectedProject)?.name ?? '-'
   const systemHealthLabel = systemInfo.health === 'online' ? t.statusOnline : t.statusOffline
   const updateStatusLabel = systemInfo.updateStatus === 'available'
-    ? `${t.updateYes}${systemInfo.latestVersion ? ` • ${systemInfo.latestVersion}` : ''}`
+    ? `${systemInfo.latestVersion ? `v${systemInfo.latestVersion}` : t.updateYes} • ${t.updateYes}`
     : systemInfo.updateStatus === 'current'
-      ? t.updateNo
+      ? (systemInfo.latestVersion ? `v${systemInfo.latestVersion}` : t.updateNo)
       : systemInfo.updateStatus === 'none'
         ? t.updateNoRelease
         : t.updateUnknown
