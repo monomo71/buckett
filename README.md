@@ -45,15 +45,16 @@ The app will be available in the browser and the API runs on port 3001.
 
 ## Docker installation
 
-Buckett includes a Docker setup for simple self-hosting.
+Buckett supports both a normal Docker Compose installation and a Dockge installation.
 
-### Start with Docker Compose
+### Option 1: regular Docker Compose
 
-1. Start Docker Desktop
-2. Open a terminal in the project root
-3. Copy the example environment file
-4. Build and start the container
-5. Open Buckett in your browser
+Use this when you cloned or downloaded the repository onto your own server or computer.
+
+1. Open a terminal in the project root
+2. Copy the example environment file
+3. Start the container
+4. Open Buckett in your browser
 
 Commands:
 
@@ -64,21 +65,17 @@ If your system uses the older Compose command, this also works:
 
 - docker-compose up -d --remove-orphans
 
+This uses [docker-compose.yml](docker-compose.yml).
+
 Then open:
 
 - http://localhost:3001
 
-### Troubleshooting
+### Option 2: Dockge on an external server
 
-If you see an error about not being able to connect to the Docker daemon, Docker Desktop is not running yet.
+Use this when you want to deploy through Dockge and do not have the full repository checked out on the server.
 
-If you see a Dockerfile not found error, make sure you run the command from the project root folder.
-
-### Dockge installation
-
-If you install Buckett through Dockge on an external server, the stack usually only contains the Compose file and not the full repository. In that case, a local Dockerfile cannot be found.
-
-Use the dedicated Dockge stack from [docker-compose.dockge.yml](docker-compose.dockge.yml). It builds directly from the public GitHub repository.
+In that case, use [docker-compose.dockge.yml](docker-compose.dockge.yml). This version builds directly from GitHub.
 
 Recommended steps:
 
@@ -86,6 +83,15 @@ Recommended steps:
 2. Paste the contents of [docker-compose.dockge.yml](docker-compose.dockge.yml)
 3. Set your own values for PUBLIC_BASE_URL, ADMIN_USERNAME, and ADMIN_PASSWORD
 4. Deploy the stack
+
+### Troubleshooting
+
+If you see an error about not being able to connect to the Docker daemon, Docker Desktop or Docker Engine is not running yet.
+
+If you see a Dockerfile not found error, make sure you either:
+
+- run the normal setup from the project root folder
+- or use the Dockge stack that builds from GitHub
 
 ### Persistent storage
 
