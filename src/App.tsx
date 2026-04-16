@@ -50,6 +50,7 @@ type Asset = {
   size: number
   createdAt: string
   url: string
+  relativeUrl?: string
 }
 
 type FolderGroup = {
@@ -550,6 +551,27 @@ function getUploadAcceptValue(allowedFileTypes: UploadType[]) {
   }
 
   return values.join(',')
+}
+
+function isLocalAssetUrl(url: string) {
+  try {
+    const parsed = new URL(url)
+    return ['localhost', '127.0.0.1', '0.0.0.0'].includes(parsed.hostname)
+  } catch {
+    return false
+  }
+}
+
+function resolveAssetPreviewUrl(asset: Asset) {
+  return asset.relativeUrl || asset.url
+}
+
+function resolveAssetCopyUrl(asset: Asset) {
+  if (asset.relativeUrl && typeof window !== 'undefined' && (!asset.url || isLocalAssetUrl(asset.url))) {
+    return new URL(asset.relativeUrl, window.location.origin).toString()
+  }
+
+  return asset.url
 }
 
 function getTopLevelFolderName(files: File[]) {
@@ -2116,7 +2138,7 @@ function App() {
                                 <IconActionButton label={t.downloadFileAction} onClick={() => downloadFile(asset.id)}>
                                   <Download className="h-3.5 w-3.5" />
                                 </IconActionButton>
-                                <IconActionButton label={t.copyUrlAction} onClick={() => void copyUrl(asset.url)}>
+                                <IconActionButton label={t.copyUrlAction} onClick={() => void copyUrl(resolveAssetCopyUrl(asset))}>
                                   <Link2 className="h-3.5 w-3.5" />
                                 </IconActionButton>
                                 <IconActionButton label={t.previewAction} onClick={() => setPreview(asset)}>
@@ -2224,7 +2246,7 @@ function App() {
             </DialogHeader>
             {preview && (
               <div className="space-y-3">
-                <img src={preview.url} alt={preview.name} className="max-h-[70vh] w-full rounded-2xl object-contain" />
+                <img src={resolveAssetPreviewUrl(preview)} alt={preview.name} className="max-h-[70vh] w-full rounded-2xl object-contain" />
                 <div className="text-sm text-slate-600">{Math.round(preview.size / 1024)} KB</div>
               </div>
             )}

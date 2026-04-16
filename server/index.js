@@ -666,7 +666,29 @@ function getDefaultDb() {
 }
 
 function readDb() {
-  return JSON.parse(fs.readFileSync(dbPath, 'utf-8'))
+  const db = JSON.parse(fs.readFileSync(dbPath, 'utf-8'))
+  const projectSlugById = new Map((Array.isArray(db.projects) ? db.projects : []).map((project) => [project.id, project.slug]))
+  let changed = false
+
+  db.files = (Array.isArray(db.files) ? db.files : []).map((file) => {
+    const projectSlug = projectSlugById.get(file.projectId)
+    if (!projectSlug) {
+      return file
+    }
+
+    const nextFile = updateFileRecordPaths(null, projectSlug, file)
+    if (nextFile.relativeUrl !== file.relativeUrl || nextFile.url !== file.url || nextFile.diskPath !== file.diskPath) {
+      changed = true
+    }
+
+    return nextFile
+  })
+
+  if (changed) {
+    writeDb(db)
+  }
+
+  return db
 }
 
 function writeDb(db) {
@@ -894,14 +916,27 @@ function buildRelativeUrl(projectSlug, folder, fileName) {
   )
 }
 
+function getPublicBaseUrl(req) {
+  const configured = String(process.env.PUBLIC_BASE_URL ?? '').trim().replace(/\/+$/, '')
+  if (configured) {
+    return configured
+  }
+
+  if (req) {
+    return `${req.protocol}://${req.get('host')}`
+  }
+
+  return ''
+}
+
 function updateFileRecordPaths(req, projectSlug, file) {
   const relativeUrl = buildRelativeUrl(projectSlug, file.folder, file.name)
-  const baseUrl = process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`
+  const baseUrl = getPublicBaseUrl(req)
 
   return {
     ...file,
     relativeUrl,
-    url: `${baseUrl}${relativeUrl}`,
+    url: baseUrl ? `${baseUrl}${relativeUrl}` : relativeUrl,
     diskPath: path.join(uploadsDir, projectSlug, file.folder, file.name),
   }
 }
